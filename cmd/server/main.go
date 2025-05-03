@@ -2,9 +2,11 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"imgproxy-proxy/internal/logging"
 	"imgproxy-proxy/internal/proxy"
@@ -12,6 +14,28 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+// Health represents the health check response structure
+type Health struct {
+	Status    string    `json:"status"`
+	Timestamp time.Time `json:"timestamp"`
+	Version   string    `json:"version"`
+}
+
+// healthHandler returns a handler function for health check requests
+func healthHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		health := Health{
+			Status:    "ok",
+			Timestamp: time.Now(),
+			Version:   "1.0.0", // TODO: This could be extracted from build info in a more complex setup
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(health)
+	}
+}
 
 // loadEnvFile loads environment variables from .env file
 func loadEnvFile(logger *logging.Logger) {
@@ -57,6 +81,9 @@ func main() {
 		http.Handle(config.MetricsEndpoint, promhttp.Handler())
 		logger.Info("Prometheus metrics enabled at %s", config.MetricsEndpoint)
 	}
+
+	// Register health check endpoint
+	http.HandleFunc("/health", healthHandler())
 
 	// Start the server
 	logger.Info(formatter.FormatServerStart(config.ServerPort, config.BaseURL))

@@ -67,11 +67,30 @@ flowchart TD
 * **Secure URLs:** Uses HMAC-SHA256 signatures (key and salt) to prevent URL tampering.
 * **Dynamic Options:** Merges options specified in the URL path with query parameters (query parameters take precedence).
 * **Content Negotiation:** Automatically selects the best image format (AVIF, WebP, JPG, PNG) based on the client's `Accept` header and adds the corresponding `f:` option.
+* **Health Check:** Built-in health check endpoint at `/health` for monitoring and orchestration.
 * **Prometheus Metrics:** Comprehensive metrics for monitoring request counts, latencies, and error rates.
 * **Standardized Logging:** Structured logging with configurable log levels.
 * **Configuration:** Configured entirely through environment variables.
 
 ## 📊 Monitoring and Observability
+
+### 🩺 Health Check
+
+The service provides a health check endpoint at `/health` that returns a JSON response with the following structure:
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-05-03T12:34:56.789Z",
+  "version": "1.0.0"
+}
+```
+
+This endpoint can be used by:
+* Docker service orchestration (detecting when the service is ready)
+* Container orchestration platforms like Kubernetes for readiness/liveness probes
+* Load balancers for health checks
+* Monitoring systems that need to verify service availability
 
 ### 📈 Prometheus Metrics
 

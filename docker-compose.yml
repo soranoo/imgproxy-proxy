@@ -20,6 +20,12 @@ services:
     depends_on:
       - imgproxy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     # Add labels for Prometheus service discovery
     labels:
       - "prometheus.io/scrape=true"
@@ -38,6 +44,11 @@ services:
       - IMGPROXY_PROMETHEUS_NAMESPACE=imgproxy
     volumes:
       - ./images:/images
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
     restart: unless-stopped
 
   # Optional Prometheus service for metrics collection
