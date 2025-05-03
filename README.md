@@ -77,10 +77,15 @@ flowchart TD
 
 The service exposes Prometheus metrics at the `/metrics` endpoint (configurable), which can be scraped by Prometheus to monitor:
 
-* **Request Counts:** Total number of requests processed, labeled by status code and path.
-* **Request Durations:** Histogram of request durations in seconds.
-* **In-Progress Requests:** Gauge of requests currently being processed.
-* **Error Counts:** Counters for backend errors and signature validation errors.
+| Metric Name                             | Type      | Description                                                                                                                             | Labels         |
+| :-------------------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| `requests_total`                        | Counter   | Total number of image proxy requests processed.                                                                                         | `status`, `path` |
+| `request_duration_seconds`              | Histogram | Duration of image proxy requests in seconds. Buckets: 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10.                                         | `status`, `path` |
+| `requests_in_progress`                  | Gauge     | Current number of image proxy requests being processed.                                                                                 | `path`         |
+| `backend_errors_total`                  | Counter   | Total number of backend errors encountered during image proxying (e.g., request creation, backend request failure, response copy error). | `type`         |
+| `signature_errors_total`                | Counter   | Total number of signature validation errors (e.g., invalid signature, path parsing error).                                              | `type`         |
+
+*(Note: The actual metric names will be prefixed with the configured `METRICS_NAMESPACE`, which defaults to `imgproxy_proxy`)*.
 
 Example Prometheus configuration:
 
