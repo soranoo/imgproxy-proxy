@@ -2,7 +2,7 @@
 
 The project starts on 02-05-2025.
 
-![Tests](https://github.com/soranoo/imgproxy-proxy/actions/workflows/test.yml/badge.svg) [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)&nbsp;&nbsp;&nbsp;[![Donation](https://img.shields.io/static/v1?label=Donation&message=❤️&style=social)](https://github.com/soranoo/Donation)
+![Tests](https://github.com/soranoo/imgproxy-proxy/actions/workflows/test.yml/badge.svg) [![codecov](https://codecov.io/gh/soranoo/imgproxy-proxy/graph/badge.svg?token=41F7HU0K43)](https://codecov.io/gh/soranoo/imgproxy-proxy) [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)&nbsp;&nbsp;&nbsp;[![Donation](https://img.shields.io/static/v1?label=Donation&message=❤️&style=social)](https://github.com/soranoo/Donation)
 
 This service acts as a secure proxy in front of an [imgproxy](https://imgproxy.net/) instance. It provides enhanced security through URL signing and allows for dynamic image option adjustments based on client capabilities and request parameters.
 

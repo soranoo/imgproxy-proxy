@@ -2,21 +2,11 @@ package logging
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"strings"
 	"testing"
 	"time"
 )
-
-// captureOutput captures log output during test execution
-func captureOutput(f func()) string {
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	f()
-	log.SetOutput(os.Stderr) // restore default output
-	return buf.String()
-}
 
 // captureLoggerOutput provides a buffer and creates a logger with that buffer as output
 func captureLoggerOutput(level int, f func(*Logger)) string {
@@ -127,4 +117,111 @@ func TestFormatter(t *testing.T) {
 			t.Errorf("expected message to contain port and backend URL, got %q", msg)
 		}
 	})
+}
+
+func TestNewLogger(t *testing.T) {
+	tests := []struct {
+		name  string
+		level int
+		msg   string
+		want  string
+	}{
+		{
+			name:  "Debug level logger",
+			level: LevelDebug,
+			msg:   "test debug message",
+			want:  "DEBUG: ",
+		},
+		{
+			name:  "Info level logger ignores debug",
+			level: LevelInfo,
+			msg:   "test debug message",
+			want:  "",
+		},
+		{
+			name:  "Error level logger",
+			level: LevelError,
+			msg:   "test error message",
+			want:  "ERROR: ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Temporarily redirect stdout and stderr
+			oldStdout := os.Stdout
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+			os.Stderr = w
+
+			logger := NewLogger(tt.level)
+
+			// Test the appropriate log level
+			switch tt.level {
+			case LevelDebug:
+				logger.Debug(tt.msg)
+			case LevelError:
+				logger.Error(tt.msg)
+			default:
+				logger.Debug(tt.msg) // Will be hidden for higher levels
+			}
+
+			w.Close()
+			var buf bytes.Buffer
+			_, _ = buf.ReadFrom(r)
+			output := buf.String()
+
+			// Restore original stdout and stderr
+			os.Stdout = oldStdout
+			os.Stderr = oldStderr
+
+			// Check for prefix and message content instead of exact match
+			if tt.want != "" {
+				if !strings.HasPrefix(output, tt.want) || !strings.Contains(output, tt.msg) {
+					t.Errorf("NewLogger(%d) output = %q, should start with %q and contain %q",
+						tt.level, output, tt.want, tt.msg)
+				}
+			} else if len(output) > 0 {
+				t.Errorf("NewLogger(%d) output = %q, want empty string", tt.level, output)
+			}
+		})
+	}
+}
+
+func TestFatalLogger(t *testing.T) {
+	// Create a logger with a custom writer to capture output
+	var buf bytes.Buffer
+	logger := NewLoggerWithWriters(LevelFatal, &buf, &buf, &buf, &buf, &buf, 0)
+
+	// We need to mock os.Exit to prevent the test from actually exiting
+	originalOsExit := osExit
+	defer func() { osExit = originalOsExit }()
+
+	exitCode := 0
+	osExit = func(code int) {
+		exitCode = code
+		panic("os.Exit called") // We'll recover from this panic
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if r != "os.Exit called" {
+				t.Errorf("unexpected panic: %v", r)
+			}
+		} else {
+			t.Error("expected panic from os.Exit, but none occurred")
+		}
+	}()
+
+	logger.Fatal("fatal error message")
+
+	output := buf.String()
+	if !strings.Contains(output, "FATAL: fatal error message") {
+		t.Errorf("expected output to contain %q, got %q", "FATAL: fatal error message", output)
+	}
+
+	if exitCode != 1 {
+		t.Errorf("expected exit code 1, got %d", exitCode)
+	}
 }

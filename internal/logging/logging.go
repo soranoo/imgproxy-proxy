@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// For testing purposes, we can swap this out
+var osExit = os.Exit
+
 // Log levels
 const (
 	LevelDebug = iota
@@ -79,7 +82,7 @@ func (l *Logger) Error(format string, v ...interface{}) {
 func (l *Logger) Fatal(format string, v ...interface{}) {
 	if l.level <= LevelFatal {
 		l.fatalLogger.Printf(format, v...)
-		os.Exit(1)
+		osExit(1)
 	}
 }
 
