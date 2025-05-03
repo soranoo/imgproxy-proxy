@@ -7,7 +7,7 @@ scrape_configs:
     static_configs:
       - targets: ["imgproxy:9100"]
       
-  - job_name: 'imgproxy-proxy'
+  - job_name: 'imgproxy-proxy-job'
     scrape_interval: 5s
     static_configs:
       - targets: ['proxy:8080']

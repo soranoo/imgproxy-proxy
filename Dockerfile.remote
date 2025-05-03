@@ -1,0 +1,52 @@
+# Dockerfile for remote deployment of imgproxy-proxy
+# This Dockerfile downloads the source code from GitHub and builds the application
+
+# Build stage
+FROM golang:1.24-alpine AS build
+
+# Install git for cloning the repository
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Clone the repository
+RUN git clone https://github.com/soranoo/imgproxy-proxy.git .
+
+# Download dependencies
+RUN go mod download
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o imgproxy-proxy -ldflags="-s -w" ./cmd/server
+
+# Runtime stage
+FROM alpine:3.21
+
+# Install CA certificates for HTTPS requests and curl for healthcheck
+RUN apk --no-cache add ca-certificates curl
+
+WORKDIR /app
+
+# Copy binary from build stage
+COPY --from=build /app/imgproxy-proxy .
+
+# Set non-root user for security
+RUN adduser -D -H -h /app appuser
+USER appuser
+
+# Expose the default port
+EXPOSE 8080
+
+# Environment variables (these can be overridden at runtime)
+ENV IMGPROXY_BASE_URL=http://imgproxy:8080 \
+    IMGPROXY_ENCODE=true \
+    METRICS_ENABLED=true \
+    METRICS_ENDPOINT=/metrics \
+    METRICS_NAMESPACE=imgproxy_proxy \
+    LOG_LEVEL=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=5s \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# Command to run
+ENTRYPOINT ["/app/imgproxy-proxy"]
