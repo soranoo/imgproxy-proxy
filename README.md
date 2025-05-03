@@ -116,6 +116,7 @@ The service requires the following environment variables:
 | `IMGPROXY_KEY`        | Hex-encoded key for HMAC signing.                                           |         | Yes      |
 | `IMGPROXY_SALT`       | Hex-encoded salt for HMAC signing.                                          |         | Yes      |
 | `IMGPROXY_BASE_URL`   | The base URL of the backend imgproxy instance (e.g., `http://localhost:8081`). |         | Yes      |
+| `IMGPROXY_SECRET`     | Authorization token for backend imgproxy instance. Will be sent as `Authorization: Bearer %secret%` header. |         | No       |
 | `IMGPROXY_ENCODE`     | Whether to Base64 encode the source URI (`true` or `false`).                | `true`  | No       |
 | `IMGPROXY_SIGNATURE_SIZE` | The desired length of the signature in bytes (max 32).                      | `32`    | No       |
 | `METRICS_ENABLED`     | Whether to enable Prometheus metrics.                                       | `true`  | No       |

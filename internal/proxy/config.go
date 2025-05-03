@@ -18,6 +18,7 @@ type Config struct {
 	Key           string `envconfig:"IMGPROXY_KEY"`                         // Key is the hex-encoded key used for signing secure URLs.
 	SignatureSize int    `envconfig:"IMGPROXY_SIGNATURE_SIZE" default:"32"` // SignatureSize specifies the desired length of the generated signature in bytes (max 32).
 	BaseURL       string `envconfig:"IMGPROXY_BASE_URL"`                    // BaseURL is the base URL of the imgproxy service.
+	Secret        string `envconfig:"IMGPROXY_SECRET"`                      // Secret is the authorization token sent as Bearer token to imgproxy.
 
 	// Metrics and logging configuration
 	MetricsEnabled   bool   `envconfig:"METRICS_ENABLED" default:"true"`             // Whether to enable Prometheus metrics

@@ -10,6 +10,7 @@ services:
     environment:
       - IMGPROXY_KEY=${IMGPROXY_KEY}
       - IMGPROXY_SALT=${IMGPROXY_SALT}
+      - IMGPROXY_SECRET=${IMGPROXY_SECRET}
       - IMGPROXY_BASE_URL=http://imgproxy:8080
       - IMGPROXY_ENCODE=true
       - METRICS_ENABLED=true
@@ -30,6 +31,7 @@ services:
     environment:
       - IMGPROXY_KEY=${IMGPROXY_KEY}
       - IMGPROXY_SALT=${IMGPROXY_SALT}
+      - IMGPROXY_SECRET=${IMGPROXY_SECRET}
       - IMGPROXY_LOCAL_FILESYSTEM_ROOT=/images
 
       - IMGPROXY_PROMETHEUS_BIND=0.0.0.0:9100

@@ -121,7 +121,28 @@ func (h *ProxyHandler) HandleImageProxy(w http.ResponseWriter, r *http.Request) 
 
 	// Forward the request
 	h.logger.Debug("Forwarding request to backend: %s", newUrl)
-	resp, err := http.Get(newUrl)
+
+	// Create request
+	req, err := http.NewRequest("GET", newUrl, nil)
+	if err != nil {
+		status := http.StatusInternalServerError
+		h.metrics.IncrementRequestsTotal(http.StatusText(status), path)
+		h.metrics.IncrementBackendError("request_creation_error")
+		h.metrics.ObserveRequestDuration(startTime, http.StatusText(status), path)
+		h.logger.Error("Error creating request: %v", err)
+		http.Error(w, "Error creating request", status)
+		return
+	}
+
+	// Add Authorization header if secret is configured
+	if h.config.Secret != "" {
+		req.Header.Set("Authorization", "Bearer "+h.config.Secret)
+		h.logger.Debug("Added Authorization header with bearer token")
+	}
+
+	// Execute request
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		status := http.StatusInternalServerError
 		h.metrics.IncrementRequestsTotal(http.StatusText(status), path)
