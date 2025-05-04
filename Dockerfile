@@ -28,6 +28,14 @@ COPY --from=build /app/imgproxy-proxy .
 RUN adduser -D -H -h /app appuser
 USER appuser
 
+# Environment variables (these can be overridden at runtime)
+ENV IMGPROXY_BASE_URL=http://imgproxy:8080 \
+    IMGPROXY_ENCODE=true \
+    METRICS_ENABLED=true \
+    METRICS_ENDPOINT=/metrics \
+    METRICS_NAMESPACE=imgproxy_proxy \
+    LOG_LEVEL=1
+
 # Expose the default port
 EXPOSE 8080
 
