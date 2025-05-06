@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -27,6 +28,52 @@ func NewProxyHandler(config Config, logger *logging.Logger, metrics *metrics.Met
 	}
 }
 
+// getClientIP extracts the real client IP address from request headers.
+// It checks common proxy headers in priority order: CF-Connecting-IP, X-Forwarded-For, X-Real-IP,
+// and falls back to RemoteAddr if none are present.
+//
+// Reference: https://stackoverflow.com/a/68793549
+func getClientIP(r *http.Request) string {
+	// Check Cloudflare specific header first
+	if ip := r.Header.Get("CF-Connecting-IP"); ip != "" {
+		if parsedIP := net.ParseIP(ip); parsedIP != nil {
+			return ip
+		}
+	}
+
+	// Check X-Forwarded-For header
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		// X-Forwarded-For may contain multiple IPs, take the first one
+		ips := strings.Split(ip, ",")
+		firstIP := strings.TrimSpace(ips[0])
+		if parsedIP := net.ParseIP(firstIP); parsedIP != nil {
+			return firstIP
+		}
+	}
+
+	// Check X-Real-IP header
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		if parsedIP := net.ParseIP(ip); parsedIP != nil {
+			return ip
+		}
+	}
+
+	// Fall back to RemoteAddr
+	ip := r.RemoteAddr
+	if strings.Contains(ip, ":") {
+		// Remove port if present
+		hostIP, _, err := net.SplitHostPort(ip)
+		if err == nil && hostIP != "" {
+			ip = hostIP
+		} else {
+			// If splitting fails, try to extract manually
+			ip = strings.Split(ip, ":")[0]
+		}
+	}
+
+	return ip
+}
+
 // HandleImageProxy processes incoming image proxy requests by verifying signatures,
 // handling image optimization options, and forwarding requests to the underlying imgproxy service.
 //
@@ -39,12 +86,15 @@ func (h *ProxyHandler) HandleImageProxy(w http.ResponseWriter, r *http.Request) 
 	startTime := time.Now()
 	path := r.URL.Path
 
+	// Get client IP address using the dedicated function
+	clientIP := getClientIP(r)
+
 	// Track request metrics
 	h.metrics.AddRequestInProgress(path)
 	defer h.metrics.RemoveRequestInProgress(path)
 
-	// Log request start
-	h.logger.Debug("Received request: %s %s", r.Method, path)
+	// Log request start with IP
+	h.logger.Debug("Received request: %s %s from IP: %s", r.Method, path, clientIP)
 
 	// Parse URL and extract parts
 	urlPath := r.URL.Path
@@ -133,6 +183,14 @@ func (h *ProxyHandler) HandleImageProxy(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Error creating request", status)
 		return
 	}
+
+	// Copy headers from original request
+	for key, values := range r.Header {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
+	h.logger.Debug("Copied headers from original request")
 
 	// Add Authorization header if secret is configured
 	if h.config.Secret != "" {
