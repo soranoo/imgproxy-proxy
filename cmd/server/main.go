@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -38,7 +39,15 @@ func healthHandler() http.HandlerFunc {
 }
 
 // loadEnvFile loads environment variables from .env file
+// When running in Docker, it will skip loading the .env file and use environment variables directly
 func loadEnvFile(logger *logging.Logger) {
+	// Check if we're running in Docker environment
+	_, inDocker := os.LookupEnv("DOCKER_ENV")
+	if inDocker {
+		logger.Info("Running in Docker environment, using environment variables directly")
+		return
+	}
+
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		logger.Warn("Unable to identify current directory, .env loading may fail")
