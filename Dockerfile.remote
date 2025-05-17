@@ -37,8 +37,7 @@ USER appuser
 EXPOSE 8080
 
 # Environment variables (these can be overridden at runtime)
-ENV DOCKER_ENV=true \
-    IMGPROXY_BASE_URL=http://imgproxy:8080 \
+ENV IMGPROXY_BASE_URL=http://imgproxy:8080 \
     IMGPROXY_ENCODE=true \
     METRICS_ENABLED=true \
     METRICS_ENDPOINT=/metrics \

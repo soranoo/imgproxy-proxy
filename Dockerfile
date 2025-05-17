@@ -29,8 +29,7 @@ RUN adduser -D -H -h /app appuser
 USER appuser
 
 # Environment variables (these can be overridden at runtime)
-ENV DOCKER_ENV=true \
-    IMGPROXY_BASE_URL=http://imgproxy:8080 \
+ENV IMGPROXY_BASE_URL=http://imgproxy:8080 \
     IMGPROXY_ENCODE=true \
     METRICS_ENABLED=true \
     METRICS_ENDPOINT=/metrics \

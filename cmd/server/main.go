@@ -4,9 +4,6 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"imgproxy-proxy/internal/logging"
@@ -39,29 +36,10 @@ func healthHandler() http.HandlerFunc {
 }
 
 // loadEnvFile loads environment variables from .env file
-// When running in Docker, it will skip loading the .env file and use environment variables directly
+// if it exists, otherwise it uses the environment variables set in the system.
 func loadEnvFile(logger *logging.Logger) {
-	// Check if we're running in Docker environment
-	_, inDocker := os.LookupEnv("DOCKER_ENV")
-	if inDocker {
-		logger.Info("Running in Docker environment, using environment variables directly")
-		return
-	}
-
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		logger.Warn("Unable to identify current directory, .env loading may fail")
-	}
-
-	// Go up two directories from cmd/server to the project root
-	rootDir := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
-	envPath := filepath.Join(rootDir, ".env")
-
-	if err := godotenv.Load(envPath); err != nil {
-		// Just warn rather than fail - env vars might be set some other way
-		logger.Warn("Could not load .env file from %s: %v", envPath, err)
-	} else {
-		logger.Info("Loaded environment variables from %s", envPath)
+	if err := godotenv.Load(); err != nil {
+		logger.Info("No .env file found, using environment variables")
 	}
 }
 
